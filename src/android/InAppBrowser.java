@@ -55,9 +55,13 @@ import org.apache.cordova.CordovaPlugin;
 import org.apache.cordova.CordovaWebView;
 import org.apache.cordova.LOG;
 import org.apache.cordova.PluginResult;
+import org.apache.cordova.PluginManager;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.StringTokenizer;
 
@@ -95,7 +99,7 @@ public class InAppBrowser extends CordovaPlugin {
      * @param callbackId    The callback id used when calling back into JavaScript.
      * @return              A PluginResult object with a status and message.
      */
-    public boolean execute(String action, CordovaArgs args, final CallbackContext callbackContext) throws JSONException {
+     public boolean execute(String action, CordovaArgs args, final CallbackContext callbackContext) throws JSONException {
         if (action.equals("open")) {
             this.callbackContext = callbackContext;
             final String url = args.getString(0);
@@ -115,9 +119,37 @@ public class InAppBrowser extends CordovaPlugin {
                     // SELF
                     if (SELF.equals(target)) {
                         Log.d(LOG_TAG, "in self");
+                        /* This code exists for compatibility between 3.x and 4.x versions of Cordova.
+                         * Previously the Config class had a static method, isUrlWhitelisted(). That
+                         * responsibility has been moved to the plugins, with an aggregating method in
+                         * PluginManager.
+                         */
+                        Boolean shouldAllowNavigation = null;
+                        if (url.startsWith("javascript:")) {
+                            shouldAllowNavigation = true;
+                        }
+                        if (shouldAllowNavigation == null) {
+                            try {
+                                Method iuw = Config.class.getMethod("isUrlWhiteListed", String.class);
+                                shouldAllowNavigation = (Boolean)iuw.invoke(null, url);
+                            } catch (NoSuchMethodException e) {
+                            } catch (IllegalAccessException e) {
+                            } catch (InvocationTargetException e) {
+                            }
+                        }
+                        if (shouldAllowNavigation == null) {
+                            try {
+                                Method gpm = webView.getClass().getMethod("getPluginManager");
+                                PluginManager pm = (PluginManager)gpm.invoke(webView);
+                                Method san = pm.getClass().getMethod("shouldAllowNavigation", String.class);
+                                shouldAllowNavigation = (Boolean)san.invoke(pm, url);
+                            } catch (NoSuchMethodException e) {
+                            } catch (IllegalAccessException e) {
+                            } catch (InvocationTargetException e) {
+                            }
+                        }
                         // load in webview
-                        if (url.startsWith("file://") || url.startsWith("javascript:") 
-                                || Config.isUrlWhiteListed(url)) {
+                        if (Boolean.TRUE.equals(shouldAllowNavigation)) {
                             Log.d(LOG_TAG, "loading in webview");
                             webView.loadUrl(url);
                         }
@@ -209,6 +241,7 @@ public class InAppBrowser extends CordovaPlugin {
         }
         return true;
     }
+
 
     /**
      * Called when the view navigates.
