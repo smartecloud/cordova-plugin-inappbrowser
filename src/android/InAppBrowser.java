@@ -863,22 +863,21 @@ public class InAppBrowser extends CordovaPlugin {
             selfCallbackContext = callbackContext;
         }
         @JavascriptInterface
-        public void exchange(int eventKey,String data){
-            switch (eventKey){
-                case 0:
-                    closeDialog();
-                    break;
-                case 1:
-                    //sendUpdate
-                    try{
-                        JSONObject obj = new JSONObject();
-                        obj.put("type", "receivedData");
-                        obj.put("data", data);
-                        sendUpdate(this.selfCallbackContext,obj,true,PluginResult.Status.OK);
-                    }catch (Exception ex){
+        public void close(){
+            closeDialog();
+        }
+        @JavascriptInterface
+        public void exchange(String handler,String data){
+            try{
+                JSONObject obj = new JSONObject();
+                obj.put("type", "receivedData");
+                obj.put("handler",handler);
+                obj.put("data", data);
+                sendUpdate(this.selfCallbackContext,obj,true,PluginResult.Status.OK);
+            }
+            catch (Exception ex)
+            {
 
-                    }
-                    break;
             }
         }
     }
