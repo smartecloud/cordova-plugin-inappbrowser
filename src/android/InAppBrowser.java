@@ -29,6 +29,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.InputType;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -41,6 +42,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.webkit.CookieManager;
 import android.webkit.CookieSyncManager;
 import android.webkit.HttpAuthHandler;
+import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
@@ -371,11 +373,11 @@ public class InAppBrowser extends CordovaPlugin {
             return null;
         } else {
             HashMap<String, Boolean> map = new HashMap<String, Boolean>();
-            StringTokenizer features = new StringTokenizer(optString, ",");
-            StringTokenizer option;
-            while(features.hasMoreElements()) {
-                option = new StringTokenizer(features.nextToken(), "=");
-                if (option.hasMoreElements()) {
+                    StringTokenizer features = new StringTokenizer(optString, ",");
+                    StringTokenizer option;
+                    while(features.hasMoreElements()) {
+                        option = new StringTokenizer(features.nextToken(), "=");
+                        if (option.hasMoreElements()) {
                     String key = option.nextToken();
                     Boolean value = option.nextToken().equals("no") ? Boolean.FALSE : Boolean.TRUE;
                     map.put(key, value);
@@ -416,6 +418,7 @@ public class InAppBrowser extends CordovaPlugin {
     /**
      * Closes the dialog
      */
+    @JavascriptInterface
     public void closeDialog() {
         this.cordova.getActivity().runOnUiThread(new Runnable() {
             @Override
@@ -525,8 +528,8 @@ public class InAppBrowser extends CordovaPlugin {
      */
     public String showWebPage(final String url, HashMap<String, Boolean> features) {
         // Determine if we should hide the location bar.
-        showLocationBar = true;
-        showZoomControls = true;
+        showLocationBar = false;
+        showZoomControls = false;
         openWindowHidden = false;
         mediaPlaybackRequiresUserGesture = false;
 
@@ -808,7 +811,8 @@ public class InAppBrowser extends CordovaPlugin {
                 } else if (clearSessionCache) {
                     CookieManager.getInstance().removeSessionCookie();
                 }
-
+                inAppWebView.addJavascriptInterface(new JsInteraction(callbackContext),"webView");
+//                inAppWebView.addJavascriptInterface(this,"webView");
                 inAppWebView.loadUrl(url);
                 inAppWebView.setId(Integer.valueOf(6));
                 inAppWebView.getSettings().setLoadWithOverviewMode(true);
@@ -852,7 +856,32 @@ public class InAppBrowser extends CordovaPlugin {
         this.cordova.getActivity().runOnUiThread(runnable);
         return "";
     }
+    class JsInteraction
+    {
+        private CallbackContext selfCallbackContext;
+        public  JsInteraction(CallbackContext callbackContext){
+            selfCallbackContext = callbackContext;
+        }
+        @JavascriptInterface
+        public void exchange(int eventKey,String data){
+            switch (eventKey){
+                case 0:
+                    closeDialog();
+                    break;
+                case 1:
+                    //sendUpdate
+                    try{
+                        JSONObject obj = new JSONObject();
+                        obj.put("type", "receivedData");
+                        obj.put("data", data);
+                        sendUpdate(this.selfCallbackContext,obj,true,PluginResult.Status.OK);
+                    }catch (Exception ex){
 
+                    }
+                    break;
+            }
+        }
+    }
     /**
      * Create a new plugin success result and send it back to JavaScript
      *
@@ -869,12 +898,15 @@ public class InAppBrowser extends CordovaPlugin {
      * @param status the status code to return to the JavaScript environment
      */
     private void sendUpdate(JSONObject obj, boolean keepCallback, PluginResult.Status status) {
-        if (callbackContext != null) {
+        sendUpdate(callbackContext,obj,keepCallback,status);
+    }
+    private void sendUpdate(CallbackContext context,JSONObject obj, boolean keepCallback, PluginResult.Status status) {
+        if (context != null) {
             PluginResult result = new PluginResult(status, obj);
             result.setKeepCallback(keepCallback);
-            callbackContext.sendPluginResult(result);
+            context.sendPluginResult(result);
             if (!keepCallback) {
-                callbackContext = null;
+                context = null;
             }
         }
     }
