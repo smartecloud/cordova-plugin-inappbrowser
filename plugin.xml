@@ -132,7 +132,7 @@
 	    <source-file src="src/ios/MbyteJSObject.m" />
 
 	    <framework src="CoreGraphics.framework" />
-        <framework src="JavaScriptCore.framework">
+        <framework src="JavaScriptCore.framework" />
     </platform>
 
     <!-- osx -->
