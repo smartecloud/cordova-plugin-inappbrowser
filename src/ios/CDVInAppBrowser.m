@@ -20,6 +20,9 @@
 #import "CDVInAppBrowser.h"
 #import <Cordova/CDVPluginResult.h>
 #import <Cordova/CDVUserAgentUtil.h>
+#import <JavaScriptCore/JavaScriptCore.h>
+#import "MbyteJSObject.h"
+
 
 #define    kInAppBrowserTargetSelf @"_self"
 #define    kInAppBrowserTargetSystem @"_system"
@@ -466,6 +469,8 @@
         [pluginResult setKeepCallback:[NSNumber numberWithBool:YES]];
 
         [self.commandDelegate sendPluginResult:pluginResult callbackId:self.callbackId];
+
+        //[self addCustomActions];
     }
 }
 
@@ -502,6 +507,29 @@
     }
 
     _previousStatusBarStyle = -1; // this value was reset before reapplying it. caused statusbar to stay black on ios7
+}
+
+- (void)sendUpdate:(NSString *)handler objData:(NSString *)objData
+{
+    if (self.callbackId != nil) {
+
+        NSMutableDictionary  *_result = [[NSMutableDictionary alloc] init];
+        [_result setObject:@"type" forKey:@"receivedData"];
+        [_result setObject:handler forKey:@"handler"];
+        [_result setObject:objData forKey:@"data"];
+
+//        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK  messageAsDictionary:_result];
+//        [pluginResult setKeepCallback:[NSNumber numberWithBool:YES]];
+
+
+//        NSString* url = [self.inAppBrowserViewController.currentURL absoluteString];
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK
+                                                      messageAsDictionary:@{@"type":@"receivedData", @"handler":handler,@"data":objData}];
+        [pluginResult setKeepCallback:[NSNumber numberWithBool:YES]];
+
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:self.callbackId];
+//        [self.commandDelegate sendPluginResult:pluginResult callbackId:self.callbackId];
+    }
 }
 
 @end
@@ -614,7 +642,9 @@
     self.addressLabel.clipsToBounds = YES;
     self.addressLabel.contentMode = UIViewContentModeScaleToFill;
     self.addressLabel.enabled = YES;
-    self.addressLabel.hidden = NO;
+//    self.addressLabel.hidden = NO;
+    self.addressLabel.hidden = YES;
+
     self.addressLabel.lineBreakMode = NSLineBreakByTruncatingTail;
 
     if ([self.addressLabel respondsToSelector:NSSelectorFromString(@"setMinimumScaleFactor:")]) {
@@ -825,7 +855,14 @@
 
 - (void)navigateTo:(NSURL*)url
 {
+//    NSURLRequest* request = [NSURLRequest requestWithURL:url];
+
+
+    NSURL *_url = [[NSBundle mainBundle] URLForResource:@"test" withExtension:@"html"];
+    //    [self.webView loadRequest:[NSURLRequest requestWithURL:url]];
+
     NSURLRequest* request = [NSURLRequest requestWithURL:url];
+//        NSURLRequest* request = [NSURLRequest requestWithURL:_url];
 
     if (_userAgentLockToken != 0) {
         [self.webView loadRequest:request];
@@ -929,6 +966,8 @@
     }
 
     [self.navigationDelegate webViewDidFinishLoad:theWebView];
+
+   [self addCustomActions];
 }
 
 - (void)webView:(UIWebView*)theWebView didFailLoadWithError:(NSError*)error
@@ -943,6 +982,51 @@
     self.addressLabel.text = NSLocalizedString(@"Load Error", nil);
 
     [self.navigationDelegate webView:theWebView didFailLoadWithError:error];
+}
+
+
+
+#pragma mark - private method
+- (void)addCustomActions
+{
+    JSContext *context = [self.webView valueForKeyPath:@"documentView.webView.mainFrame.javaScriptContext"];
+
+//    [context evaluateScript:@"var arr = [3, 4, 'abc'];"];
+    NSString *alertStr = @"alert('Hello')";
+//    [context evaluateScript:alertStr];//调用 js alert
+
+    // 1.1 传递相关对象
+//    context[@"webView"] = self;
+    context.exceptionHandler = ^(JSContext *con, JSValue *exception) {
+        con.exception = exception;
+        NSLog(@"%@", exception);
+    };
+    // 设置处理异常的block回调
+//    [context setExceptionHandler:^(JSContext *ctx, JSValue *value) {
+//        NSLog(@"error: %@", value);
+//    }];
+
+//     MbyteJSObject *obj = [[MbyteJSObject alloc] init];
+//     context[@"webView"] = obj;
+
+//    MbyteJSObject *jsObject = [MbyteJSObject objectWithWebView:self.webView];
+    MbyteJSObject *jsObject = [MbyteJSObject objectWithInAppBrowserVC:self];
+    context[@"webView"] = jsObject;
+
+    //JSValue *js = context[@"webView"];
+    //[js callWithArguments:@[@"This is token"]];
+    [self addGoCloseWithContext:context];
+}
+
+- (void)addGoCloseWithContext:(JSContext *)context
+{
+    context[@"goClose"] = ^() {
+        NSLog(@"goClose");
+    };
+}
+
+- (void)recieveJSData:(NSString*)handel  objData:(NSString *)objData
+{
 }
 
 #pragma mark CDVScreenOrientationDelegate
@@ -974,6 +1058,8 @@
 }
 
 @end
+
+
 
 @implementation CDVInAppBrowserOptions
 

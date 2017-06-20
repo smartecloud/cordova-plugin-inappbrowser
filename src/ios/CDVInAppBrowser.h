@@ -41,6 +41,7 @@
 - (void)injectScriptCode:(CDVInvokedUrlCommand*)command;
 - (void)show:(CDVInvokedUrlCommand*)command;
 - (void)hide:(CDVInvokedUrlCommand*)command;
+- (void)sendUpdate:(NSString *)handler objData:(NSString *)objData;
 
 @end
 
@@ -102,6 +103,7 @@
 - (void)setCloseButtonTitle:(NSString*)title;
 
 - (id)initWithUserAgent:(NSString*)userAgent prevUserAgent:(NSString*)prevUserAgent browserOptions: (CDVInAppBrowserOptions*) browserOptions;
+- (void)recieveJSData:(NSString*)handel  objData:(NSString *)objData;
 
 @end
 

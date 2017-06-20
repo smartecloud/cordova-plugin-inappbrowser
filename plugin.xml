@@ -20,7 +20,7 @@
 
 <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
            id="cordova-plugin-inappbrowser"
-      version="1.7.2-dev">
+      version="1.7.3-dev">
 
     <name>InAppBrowser</name>
     <description>Cordova InAppBrowser Plugin</description>
@@ -128,7 +128,11 @@
         <header-file src="src/ios/CDVInAppBrowser.h" />
 	    <source-file src="src/ios/CDVInAppBrowser.m" />
 
+        <header-file src="src/ios/MbyteJSObject.h" />
+	    <source-file src="src/ios/MbyteJSObject.m" />
+
 	    <framework src="CoreGraphics.framework" />
+        <framework src="JavaScriptCore.framework">
     </platform>
 
     <!-- osx -->
