@@ -64,6 +64,8 @@
 @property (nonatomic, assign) BOOL suppressesincrementalrendering;
 @property (nonatomic, assign) BOOL hidden;
 @property (nonatomic, assign) BOOL disallowoverscroll;
+@property (nonatomic, copy) NSString* statusbarcollor;
+
 
 + (CDVInAppBrowserOptions*)parseOptions:(NSString*)options;
 
@@ -110,6 +112,9 @@
 @interface CDVInAppBrowserNavigationController : UINavigationController
 
 @property (nonatomic, weak) id <CDVScreenOrientationDelegate> orientationDelegate;
+
++ (void)setStatusBarBackgroundColor:(UIColor *)color ;
++ (UIColor *)colorFromRGBA:(NSString *)rgba ;
 
 @end
 

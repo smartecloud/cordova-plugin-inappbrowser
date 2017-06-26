@@ -73,11 +73,11 @@
 
 - (BOOL) isSystemUrl:(NSURL*)url
 {
-	if ([[url host] isEqualToString:@"itunes.apple.com"]) {
-		return YES;
-	}
+    if ([[url host] isEqualToString:@"itunes.apple.com"]) {
+        return YES;
+    }
 
-	return NO;
+    return NO;
 }
 
 - (void)open:(CDVInvokedUrlCommand*)command
@@ -168,6 +168,12 @@
     if (browserOptions.closebuttoncaption != nil) {
         [self.inAppBrowserViewController setCloseButtonTitle:browserOptions.closebuttoncaption];
     }
+
+    //set statusbar color
+    if (browserOptions.statusbarcollor != nil) {
+        [CDVInAppBrowserNavigationController setStatusBarBackgroundColor:[CDVInAppBrowserNavigationController colorFromRGBA:browserOptions.statusbarcollor]];
+    }
+
     // Set Presentation Style
     UIModalPresentationStyle presentationStyle = UIModalPresentationFullScreen; // default
     if (browserOptions.presentationstyle != nil) {
@@ -232,7 +238,7 @@
     _previousStatusBarStyle = [UIApplication sharedApplication].statusBarStyle;
 
     __block CDVInAppBrowserNavigationController* nav = [[CDVInAppBrowserNavigationController alloc]
-                                   initWithRootViewController:self.inAppBrowserViewController];
+                                                        initWithRootViewController:self.inAppBrowserViewController];
     nav.orientationDelegate = self.inAppBrowserViewController;
     nav.navigationBarHidden = YES;
     nav.modalPresentationStyle = self.inAppBrowserViewController.modalPresentationStyle;
@@ -518,17 +524,17 @@
         [_result setObject:handler forKey:@"handler"];
         [_result setObject:objData forKey:@"data"];
 
-//        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK  messageAsDictionary:_result];
-//        [pluginResult setKeepCallback:[NSNumber numberWithBool:YES]];
+        //        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK  messageAsDictionary:_result];
+        //        [pluginResult setKeepCallback:[NSNumber numberWithBool:YES]];
 
 
-//        NSString* url = [self.inAppBrowserViewController.currentURL absoluteString];
+        //        NSString* url = [self.inAppBrowserViewController.currentURL absoluteString];
         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK
                                                       messageAsDictionary:@{@"type":@"receivedData", @"handler":handler,@"data":objData}];
         [pluginResult setKeepCallback:[NSNumber numberWithBool:YES]];
 
         [self.commandDelegate sendPluginResult:pluginResult callbackId:self.callbackId];
-//        [self.commandDelegate sendPluginResult:pluginResult callbackId:self.callbackId];
+        //        [self.commandDelegate sendPluginResult:pluginResult callbackId:self.callbackId];
     }
 }
 
@@ -561,7 +567,7 @@
 
 // Prevent crashes on closing windows
 -(void)dealloc {
-   self.webView.delegate = nil;
+    self.webView.delegate = nil;
 }
 
 - (void)createViews
@@ -642,7 +648,7 @@
     self.addressLabel.clipsToBounds = YES;
     self.addressLabel.contentMode = UIViewContentModeScaleToFill;
     self.addressLabel.enabled = YES;
-//    self.addressLabel.hidden = NO;
+    //    self.addressLabel.hidden = NO;
     self.addressLabel.hidden = YES;
 
     self.addressLabel.lineBreakMode = NSLineBreakByTruncatingTail;
@@ -855,14 +861,14 @@
 
 - (void)navigateTo:(NSURL*)url
 {
-//    NSURLRequest* request = [NSURLRequest requestWithURL:url];
+    //    NSURLRequest* request = [NSURLRequest requestWithURL:url];
 
 
     NSURL *_url = [[NSBundle mainBundle] URLForResource:@"test" withExtension:@"html"];
     //    [self.webView loadRequest:[NSURLRequest requestWithURL:url]];
 
     NSURLRequest* request = [NSURLRequest requestWithURL:url];
-//        NSURLRequest* request = [NSURLRequest requestWithURL:_url];
+    //        NSURLRequest* request = [NSURLRequest requestWithURL:_url];
 
     if (_userAgentLockToken != 0) {
         [self.webView loadRequest:request];
@@ -967,7 +973,7 @@
 
     [self.navigationDelegate webViewDidFinishLoad:theWebView];
 
-   [self addCustomActions];
+    [self addCustomActions];
 }
 
 - (void)webView:(UIWebView*)theWebView didFailLoadWithError:(NSError*)error
@@ -991,25 +997,25 @@
 {
     JSContext *context = [self.webView valueForKeyPath:@"documentView.webView.mainFrame.javaScriptContext"];
 
-//    [context evaluateScript:@"var arr = [3, 4, 'abc'];"];
+    //    [context evaluateScript:@"var arr = [3, 4, 'abc'];"];
     NSString *alertStr = @"alert('Hello')";
-//    [context evaluateScript:alertStr];//调用 js alert
+    //    [context evaluateScript:alertStr];//调用 js alert
 
     // 1.1 传递相关对象
-//    context[@"webView"] = self;
+    //    context[@"webView"] = self;
     context.exceptionHandler = ^(JSContext *con, JSValue *exception) {
         con.exception = exception;
         NSLog(@"%@", exception);
     };
     // 设置处理异常的block回调
-//    [context setExceptionHandler:^(JSContext *ctx, JSValue *value) {
-//        NSLog(@"error: %@", value);
-//    }];
+    //    [context setExceptionHandler:^(JSContext *ctx, JSValue *value) {
+    //        NSLog(@"error: %@", value);
+    //    }];
 
-//     MbyteJSObject *obj = [[MbyteJSObject alloc] init];
-//     context[@"webView"] = obj;
+    //     MbyteJSObject *obj = [[MbyteJSObject alloc] init];
+    //     context[@"webView"] = obj;
 
-//    MbyteJSObject *jsObject = [MbyteJSObject objectWithWebView:self.webView];
+    //    MbyteJSObject *jsObject = [MbyteJSObject objectWithWebView:self.webView];
     MbyteJSObject *jsObject = [MbyteJSObject objectWithInAppBrowserVC:self];
     context[@"webView"] = jsObject;
 
@@ -1081,6 +1087,8 @@
         self.suppressesincrementalrendering = NO;
         self.hidden = NO;
         self.disallowoverscroll = NO;
+        //
+        self.statusbarcollor = nil;
     }
 
     return self;
@@ -1127,6 +1135,29 @@
 
 @implementation CDVInAppBrowserNavigationController : UINavigationController
 
++ (UIColor *)colorFromRGBA:(NSString *)rgba {
+    unsigned rgbaVal = 0;
+
+    if ([[rgba substringWithRange:NSMakeRange(0, 1)] isEqualToString:@"#"]) {
+        // First char is #, get rid of that.
+        rgba = [rgba substringFromIndex:1];
+    }
+
+    if (rgba.length < 8) {
+        // If alpha is not given, just append ff.
+        rgba = [NSString stringWithFormat:@"%@ff", rgba];
+    }
+
+    NSScanner *scanner = [NSScanner scannerWithString:rgba];
+    [scanner setScanLocation:0];
+    [scanner scanHexInt:&rgbaVal];
+
+    return [UIColor colorWithRed:(rgbaVal >> 24 & 0xFF) / 255.0f
+                           green:(rgbaVal >> 16 & 0xFF) / 255.0f
+                            blue:(rgbaVal >> 8 & 0xFF) / 255.0f
+                           alpha:(rgbaVal & 0xFF) / 255.0f];
+}
+
 - (void) dismissViewControllerAnimated:(BOOL)flag completion:(void (^)(void))completion {
     if ( self.presentedViewController) {
         [super dismissViewControllerAnimated:flag completion:completion];
@@ -1141,11 +1172,31 @@
 
     UIToolbar* bgToolbar = [[UIToolbar alloc] initWithFrame:statusBarFrame];
     bgToolbar.barStyle = UIBarStyleDefault;
+    //    self.navigationController.navigationBar.translucent = YES;//不透明
+    //    bgToolbar.backgroundColor = [CDVInAppBrowserNavigationController colorFromRGBA:@"#134789"];
     [bgToolbar setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
     [self.view addSubview:bgToolbar];
+//    [self setStatusBarBackgroundColor:[CDVInAppBrowserNavigationController colorFromRGBA:@"#00aae7"]];
 
     [super viewDidLoad];
 }
+
+
+//设置状态栏颜色
++ (void)setStatusBarBackgroundColor:(UIColor *)color {
+
+    UIView *statusBar = [[[UIApplication sharedApplication] valueForKey:@"statusBarWindow"] valueForKey:@"statusBar"];
+    NSLog(@"statusBar.backgroundColor--->%@",statusBar.backgroundColor);
+    if ([statusBar respondsToSelector:@selector(setBackgroundColor:)]) {
+        statusBar.backgroundColor = color;
+    }
+}
+
+- (UIStatusBarStyle)preferredStatusBarStyle{
+    return UIStatusBarStyleLightContent;//白色
+}
+
+
 
 - (CGRect) invertFrameIfNeeded:(CGRect)rect {
     // We need to invert since on iOS 7 frames are always in Portrait context
@@ -1175,7 +1226,7 @@
     if ((self.orientationDelegate != nil) && [self.orientationDelegate respondsToSelector:@selector(supportedInterfaceOrientations)]) {
         return [self.orientationDelegate supportedInterfaceOrientations];
     }
-
+    
     return 1 << UIInterfaceOrientationPortrait;
 }
 
@@ -1184,7 +1235,7 @@
     if ((self.orientationDelegate != nil) && [self.orientationDelegate respondsToSelector:@selector(shouldAutorotateToInterfaceOrientation:)]) {
         return [self.orientationDelegate shouldAutorotateToInterfaceOrientation:interfaceOrientation];
     }
-
+    
     return YES;
 }
 
